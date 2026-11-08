@@ -16031,9 +16031,11 @@ cc_prebuilt_library_shared {
     target: {
         android_arm64: {
             srcs: [
-                "proprietary/system_ext/lib64/libwfdmmsrc_system.so",
+                ":diting_wfdmmsrc_system_fixed",
             ],
             shared_libs: [
+                "libgui_shim",
+                "libaudiobase",
                 "libbinder",
                 "libmmosal",
                 "liblog",
@@ -16148,9 +16150,10 @@ cc_prebuilt_library_shared {
     target: {
         android_arm64: {
             srcs: [
-                "proprietary/system_ext/lib64/libwfdservice.so",
+                ":diting_wfdservice_fixed",
             ],
             shared_libs: [
+                "libaudiobase",
                 "liblog",
                 "libutils",
                 "libcutils",
@@ -16166,7 +16169,7 @@ cc_prebuilt_library_shared {
                 "libaudioclient",
                 "libaudiofoundation",
                 "audioclient-types-aidl-cpp",
-                "android.media.audio.common.types-V4-cpp",
+                "android.media.audio.common.types-V5-cpp",
                 "libwfdmmsrc_system",
                 "libwfdavenhancements",
                 "libhidlbase",
@@ -20193,4 +20196,27 @@ filegroup {
         "proprietary/vendor/etc/qcril_database/upgrade/other/8_version_update_ecc_table.sql",
         "proprietary/vendor/etc/qcril_database/upgrade/other/9_version_update_ecc_table.sql",
     ],
+}
+
+// Generate WFD dependencies in out; the proprietary source files stay unmodified.
+python_binary_host {
+    name: "diting_fix_wfd",
+    main: "fix_wfd.py",
+    srcs: ["fix_wfd.py"],
+}
+
+genrule {
+    name: "diting_wfdservice_fixed",
+    tools: ["diting_fix_wfd", "diting_patchelf_0_18"],
+    srcs: ["proprietary/system_ext/lib64/libwfdservice.so"],
+    out: ["libwfdservice.so"],
+    cmd: "$(location diting_fix_wfd) --patchelf $(location diting_patchelf_0_18) --module libwfdservice --input $(in) --output $(out)",
+}
+
+genrule {
+    name: "diting_wfdmmsrc_system_fixed",
+    tools: ["diting_fix_wfd", "diting_patchelf_0_18"],
+    srcs: ["proprietary/system_ext/lib64/libwfdmmsrc_system.so"],
+    out: ["libwfdmmsrc_system.so"],
+    cmd: "$(location diting_fix_wfd) --patchelf $(location diting_patchelf_0_18) --module libwfdmmsrc_system --input $(in) --output $(out)",
 }
